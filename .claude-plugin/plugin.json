@@ -1,0 +1,11 @@
+{
+  "name": "ronin13",
+  "version": "0.0.1",
+  "description": "Skills that make Claude Code write less code that people can read and change later.",
+  "author": {
+    "name": "yujirot0627",
+    "url": "https://github.com/yujirot0627"
+  },
+  "repository": "https://github.com/yujirot0627/Ronin13",
+  "license": "MIT"
+}

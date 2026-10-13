@@ -1,0 +1,15 @@
+{
+  "name": "ronin13",
+  "description": "Marketplace for the Ronin13 plugin.",
+  "owner": {
+    "name": "yujirot0627",
+    "url": "https://github.com/yujirot0627"
+  },
+  "plugins": [
+    {
+      "name": "ronin13",
+      "source": "./",
+      "description": "Skills that make Claude Code write less code that people can read and change later."
+    }
+  ]
+}
