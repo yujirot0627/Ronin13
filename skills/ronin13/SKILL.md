@@ -1,37 +1,51 @@
 ---
 name: ronin13
-description: Reduces how much code gets written while keeping it readable and easy for someone else to change later. Use whenever writing, adding, fixing, refactoring, or reviewing code in any language, even when the request does not say "keep it simple" or mention code size.
+description: Writes the minimum code that satisfies the request, in a form that is readable and easy for someone else to change later. Use whenever writing, adding, fixing, refactoring, or reviewing code in any language, even when the request does not say "keep it simple" or mention code size.
 ---
+
+Write only the minimum code that satisfies the request. Don't add features or abstractions nobody asked for.
+Before writing anything new, check whether something that already exists does the job: the project's own code, built-in features of the language or platform, or an installed dependency.
+When reviewing code, apply these same rules.
 
 ## Before you write
 
-1. Read the request and the code it touches, including the code that calls it. Look for an existing function, standard-library feature, or installed dependency that already does the job.
+1. Read the request and the code it touches, including the code that calls it.
 2. Before editing, enumerate where the change has to land: callers, tests, fixtures, configuration, and public interfaces.
 3. Ask who the change could hurt: a caller that would break, data that would be lost, data that would leak.
 
-"Smallest" in priority 3 below means the least change that lands in all of those places, never one that drops some of them. A dependent that breaks without an update belongs to the request; nearby code that is merely imperfect does not.
+"Minimum" means the least change that lands in all of those places, not one that drops some of them. A dependent that breaks without an update belongs to the request.
 
 ## Priorities
 
-YAGNI, KISS, DRY, SOLID, and object-oriented design all serve one goal: code that is easy to change. They differ in when they add structure. YAGNI, KISS, and DRY remove code; SOLID and OOP, pushed hard, add classes and files. Structure built for a predicted future is the over-design YAGNI forbids, so add structure only when a need is real, and apply these principles through the order and triggers below rather than as slogans.
+YAGNI, KISS, DRY, and SOLID all serve one goal: code that is easy to change. YAGNI, KISS, and DRY remove code; SOLID, pushed hard, adds classes and files. Structure built for a predicted future is the over-design YAGNI forbids, so apply these principles through the order and triggers below rather than as slogans.
 
 When principles conflict, decide in this order:
 
 1. **Follow the project's existing conventions and the language's idioms.** Readers expect the patterns they already know. If every service in the codebase has an interface, give the new one an interface too, even where the triggers below would not.
-2. **Make it readable by someone else and fixable in one place.** Give each function one job and keep its steps at one level of abstraction. The next person should find each piece of logic once and change it once.
-3. **Make the smallest change that fully covers the request.** Every extra line is one more line to review and maintain.
+2. **Write the minimum code that fully covers the request.**
 
-Less code should be a result of these priorities, not a goal of its own. Don't compress code until it becomes hard to read.
+## Constraints
+
+Readability and ease of change are constraints on every change, not priorities to trade against size. Don't compress code until it becomes hard to read.
+
+To keep code readable:
+
+- Name things for what they hold or do.
+- Return early to keep nesting shallow.
+- Avoid tricks a reader has to decode.
+- Declare each variable close to where it is first used.
+
+To keep code easy to change, write each piece of knowledge in one place, so one change to the spec takes one edit.
+
+Make each function a unit a reader can understand from top to bottom. If understanding it means going back and forth between two functions, merge them. One job is a reason to separate code, not a reason to cut it into small pieces.
 
 ## When to add structure
 
 Structure means a shared helper, interface, base class, wrapper, new file, or new layer. Add it only when one of these triggers is met; otherwise write the code directly.
 
-- **Third copy of the same knowledge: extract.** Code that looks alike is not always the same knowledge; the test is whether the copies change for the same reason. Extract only when a third copy appears and all three pass that test, so the next fix lands in one place. If unsure, keep the duplication, because a wrong abstraction is harder to undo than a copy. When you extract, replace the two existing copies with the minimal edit: a helper only some copies use hides the rest from the next fix. If you can't do that safely (a large edit, or behavior you can't confirm unchanged), don't extract; write the third copy and report the duplication.
+- **Third copy of the same knowledge: extract.** Code that looks alike is not always the same knowledge; the test is whether the copies change for the same reason. Extract only when a third copy appears and all three pass that test, so the next fix lands in one place. If unsure, keep the duplication, because a wrong abstraction is harder to undo than a copy. When you extract, replace the two existing copies with the minimal edit: a helper only some copies use hides the rest from the next fix. If you can't do that safely (a large edit, or behavior you can't confirm unchanged), don't extract; write the third copy.
 - **Second reason to change: split by responsibility.** When a function or file would change for two unrelated reasons, separate them. Split by responsibility, not line count: a long file with one job stays whole, and a short file with two jobs gets split. When your change would add a second responsibility to a file, put it in its own file. Leave existing mixed files alone unless the task requires touching them.
 - **Real need to swap implementations: add an interface.** Introduce an interface or inheritance only when swapping implementations is an actual requirement. While there is one implementation, call it directly.
-
-Apply object-oriented principles only where the language and the project are written in an object-oriented style. There, compose small parts instead of inheriting, and keep inheritance to one level unless the codebase's conventions call for more, because deep hierarchies spread one change across many classes. In a function-oriented codebase, follow its style: plain functions and modules instead of classes.
 
 Examples:
 
@@ -43,14 +57,12 @@ Examples:
 
 Each habit below adds code someone has to read and maintain. Do the alternative instead.
 
-- **Adding features or options nobody asked for** → implement only the request.
-- **Abstractions or wrappers with one implementation** → write the code directly.
 - **Defensive code for cases that cannot happen** → validate only at boundaries, such as user input, files, and external APIs.
 - **Optimizing without evidence** → write it correct and readable first. Optimize only when a measurement shows the need or the request asks for it.
 - **Comments and docstrings that restate the code** → let names say what the code does, and comment only where the reason behind it isn't obvious.
 - **Removing or rewriting code whose purpose you don't know** → first find out why it exists from git log, its callers, and its tests. If it's still unclear, leave it.
-- **Fixing a bug only on the path it was reported from** → before editing a function, find all of its callers. Correct the root cause once in the shared code: that diff is smaller than a guard in each caller, and it leaves no sibling caller with the same fault. Fix only the reported path when another caller's code or tests show it relies on current behavior, and report sibling callers. Missing tests are not that evidence: otherwise untested code would never get the root-cause fix. Read every caller closely.
-- **Mixing concerns or rewriting nearby code** → put one concern in each change and touch only what the request needs, so the diff is easy to review and to revert.
+- **Fixing a bug only on the path it was reported from** → before editing a function, find all of its callers. Correct the root cause once in the shared code: that diff is smaller than a guard in each caller, and it leaves no sibling caller with the same fault. Fix only the reported path when another caller's code or tests show it relies on current behavior. Missing tests are not that evidence: otherwise untested code would never get the root-cause fix. Read every caller closely.
+- **Mixing concerns or rewriting nearby code** → put one concern in each change and touch only what the request needs, so the diff is easy to review and to revert. Tidy only the lines you wrote or changed; leave unrelated lines alone.
 - **Hard-coding values to pass tests, or deleting or weakening tests** → write an implementation that is correct in general. Keep every existing test; a failing test is telling you something about the code.
 
 Keep these even when trimming, because the harm from cutting them outweighs any saving in size:
@@ -60,20 +72,4 @@ Keep these even when trimming, because the harm from cutting them outweighs any 
 - Security
 - Accessibility
 - Anything the request explicitly asks for
-- A minimal test that checks the behavior you changed
-
-## Final checklist
-
-Before reporting the work as done, check each item. When reviewing someone else's change, use the same list as review criteria.
-
-- [ ] It follows the project's conventions and the language's idioms.
-- [ ] Every new helper, interface, base class, file, or layer meets a trigger in "When to add structure".
-- [ ] The change reaches every place listed in "Before you write" and nothing beyond the request: one concern, no optimization without evidence, and nearby code untouched unless the request needed it.
-- [ ] Existing code, the standard library, and installed dependencies were checked before writing new code, and no code of unknown purpose was removed or rewritten.
-- [ ] Boundary validation, data-loss error handling, security, and accessibility are intact.
-- [ ] A test covers the changed behavior, and no test was deleted or weakened.
-- [ ] Each function does one job, and each piece of logic lives in one place where a reader can find and fix it.
-
-## Report
-
-After a reply that changes code, close with one or two lines on what you left out, what you didn't verify, and what risk the code's users should know about. Include whichever apply: ideas you didn't build, copies you merged into a shared helper or duplication you kept, mixed-responsibility files you left alone, code of unknown purpose you kept, and sibling callers still exposed to a bug you fixed on one path. State only facts about this change; when there is nothing to flag, say that plainly rather than adding boilerplate caveats. Replies that don't change code need no report.
+- Tests for new or changed non-trivial logic, written the way the existing tests are. Trivial changes need no new test.

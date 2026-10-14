@@ -1,6 +1,6 @@
 # Ronin13
 
-A Claude Code plugin that gets Claude to write less code that people can read and change later. YAGNI, KISS, and DRY come first. SOLID-style structure is added only when it is actually needed.
+A Claude Code plugin that gets Claude to write the minimum code that satisfies the request. Readability and ease of change are constraints on that code, not goals traded against size. Helpers, interfaces, and new files are added only when a concrete need appears.
 
 ## Status
 
